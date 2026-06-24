@@ -1,0 +1,46 @@
+name: 古巴雪茄补货监控
+
+# 每 20 分钟运行一次
+on:
+  schedule:
+    # Cron 格式：分 时 日 月 周
+    # 每 20 分钟：0,20,40 * * * *
+    - cron: '0,20,40 * * * *'
+  # 也允许手动触发
+  workflow_dispatch:
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest  # 美国 IP
+    timeout-minutes: 10
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: 设置 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 安装依赖
+        run: pip install -r requirements.txt
+
+      - name: 运行监控脚本
+        env:
+          # 企业微信 Webhook 地址
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+        run: python cigar_monitor_action.py
+
+      - name: 提交状态文件
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add cigar_stock_state.json
+          git diff --quiet && git diff --staged --quiet || git commit -m "更新库存状态 [自动]"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
