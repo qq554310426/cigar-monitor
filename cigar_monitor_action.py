@@ -67,7 +67,7 @@ def fetch_page():
         resp = requests.get(URL, headers=headers, timeout=30)
         log(f"HTTP 状态码: {resp.status_code}")
 
-        if resp.status_code == 200 and "wc-card" in resp.text:
+        if resp.status_code in (200, 202) and "wc-card" in resp.text:
             log(f"✅ 页面获取成功 ({len(resp.text)} 字节, {resp.text.count('wc-card')} 个卡片)")
             return resp.text
         else:
